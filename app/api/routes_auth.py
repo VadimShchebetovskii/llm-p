@@ -12,18 +12,11 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
-async def register(
-    request: RegisterRequest,
-    auth_usecase: AuthUsecase = Depends(get_auth_usecase)
-):
+async def register(request: RegisterRequest, auth_usecase: AuthUsecase = Depends(get_auth_usecase)):
     try:
-        user = await auth_usecase.register(request.email, request.password)
-        return UserPublic.model_validate(user)
+        return await auth_usecase.register(request.email, request.password)
     except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.message)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -33,7 +26,7 @@ async def login(
 ):
     try:
         token = await auth_usecase.login(form_data.username, form_data.password)
-        return TokenResponse(access_token=token, token_type="bearer")
+        return TokenResponse(access_token=token)
     except UnauthorizedError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -48,8 +41,7 @@ async def get_current_user(
     auth_usecase: AuthUsecase = Depends(get_auth_usecase)
 ):
     try:
-        user = await auth_usecase.get_profile(user_id)
-        return UserPublic.model_validate(user)
+        return await auth_usecase.get_profile(user_id)
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -6,11 +6,7 @@ class AppError(Exception):
     Базовое исключение приложения.
     """
     
-    def __init__(
-        self, 
-        message: str, 
-        details: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
         self.message = message
         self.details = details or {}
         super().__init__(message)

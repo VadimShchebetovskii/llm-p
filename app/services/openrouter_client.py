@@ -1,21 +1,26 @@
 import httpx
-from typing import List, Dict, Any
 from app.core.errors import ExternalServiceError
-from app.core import config
+from app.core.config import settings
+
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_TEMPERATURE = 0.7
 
+
 class OpenRouterClient:
+    """Клиент для взаимодействия с OpenRouter API (LLM)"""
 
     def __init__(self):
-        self.base_url = config.OPENROUTER_BASE_URL
-        self.api_key = config.OPENROUTER_API_KEY
-        self.referer = config.OPENROUTER_SITE_URL
-        self.title = config.OPENROUTER_APP_NAME
-        
-    async def chat_completion(self, model: str, messages: List[Dict[str, str]], temperature: float = DEFAULT_TEMPERATURE) -> Dict[str, Any]:
-        async with httpx.AsyncClient() as client:
+        self.base_url = settings.openrouter_base_url
+        self.api_key = settings.openrouter_api_key
+        self.model = settings.openrouter_model
+        self.referer = settings.openrouter_site_url
+        self.title = settings.openrouter_app_name
+
+    async def chat_completion(self, messages: list[dict[str, str]], temperature: float = DEFAULT_TEMPERATURE) -> str:
+        """Отправляет запрос к LLM и возвращает текст ответа"""
+
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, verify=False) as client:
             response = await client.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -25,14 +30,14 @@ class OpenRouterClient:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": model,
+                    "model": self.model,
                     "messages": messages,
                     "temperature": temperature
-                },
-                timeout=DEFAULT_TIMEOUT
+                }
             )
-            
+
             if response.status_code != 200:
                 raise ExternalServiceError(f"OpenRouter error: {response.status_code} - {response.text}")
-                
-            return response.json()
+
+            result = response.json()
+            return result["choices"][0]["message"]["content"]

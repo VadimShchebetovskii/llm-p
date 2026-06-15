@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+
 from app.api import routes_auth, routes_chat
 from app.db.base import Base
 from app.core.config import settings
@@ -9,35 +9,35 @@ from app.db.session import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Управление жизненным циклом приложения"""
+
+    # Запуск: создание таблиц БД
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
     yield
-
+    # Остановка: закрытие соединений
     await engine.dispose()
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title=settings.APP_NAME,
-        env=settings.ENV
+        title=settings.app_name,
+        description="FastAPI service with JWT auth, SQLite, and OpenRouter LLM proxy",
+        version="0.1.0",
+        lifespan=lifespan
     )
-
-    if hasattr(settings, 'CORS_ORIGINS') and settings.CORS_ORIGINS:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.CORS_ORIGINS,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
     
-    app.include_router(routes_auth.router, prefix="/api/v1/auth", tags=["auth"])
-    app.include_router(routes_chat.router, prefix="/api/v1/chat", tags=["chat"])
+    app.include_router(routes_auth.router, prefix="/auth", tags=["Authentication"])
+    app.include_router(routes_chat.router, prefix="/chat", tags=["Chat"])
     
     return app
 
+
 app = create_app()
+
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "env": settings.ENV}
+    """Проверка состояния сервера"""
+    
+    return {"status": "ok", "environment": settings.env}

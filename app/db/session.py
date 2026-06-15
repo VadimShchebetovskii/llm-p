@@ -2,10 +2,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from app.core.config import settings
 
 
-engine = create_async_engine(f"sqlite+aiosqlite:///{settings.SQLITE_PATH}")
+engine = create_async_engine(
+    f"sqlite+aiosqlite:///{settings.sqlite_path}",
+    echo=settings.env == "local"  # Логи SQL в режиме разработки
+)
 
-AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
-
-async def get_async_session():
-    async with AsyncSessionLocal() as session:
-        yield session
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)

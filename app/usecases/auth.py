@@ -1,15 +1,18 @@
 from app.repositories.users import UserRepository
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.errors import ConflictError, UnauthorizedError, NotFoundError
-from app.db.models import UserOrm
+from app.schemas.user import UserPublic
 
 
 class AuthUsecase:
+    """Бизнес-логика аутентификации и управления пользователями"""
 
     def __init__(self, user_repository: UserRepository):
         self._user_repository = user_repository
 
-    async def register(self, email: str, password: str) -> UserOrm:
+    async def register(self, email: str, password: str) -> UserPublic:
+        """Регистрация нового пользователя"""
+
         existing_user = await self._user_repository.get_by_email(email)
         if existing_user:
             raise ConflictError(
@@ -23,9 +26,11 @@ class AuthUsecase:
             role="user"
         )
         
-        return user
+        return UserPublic.model_validate(user)
 
     async def login(self, email: str, password: str) -> str:
+        """Аутентификация пользователя, возвращает JWT-токен"""
+
         user = await self._user_repository.get_by_email(email)
         
         if not user or not verify_password(password, user.password_hash):
@@ -40,7 +45,9 @@ class AuthUsecase:
         
         return access_token
 
-    async def get_profile(self, user_id: int) -> UserOrm:
+    async def get_profile(self, user_id: int) -> UserPublic:
+        """Получение профиля пользователя по ID"""
+
         user = await self._user_repository.get_by_id(user_id)
         
         if not user:
@@ -49,4 +56,4 @@ class AuthUsecase:
                 details={"user_id": user_id}
             )
         
-        return user
+        return UserPublic.model_validate(user)

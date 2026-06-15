@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
 
 from app.api.deps import get_current_user_id, get_chat_usecase
 from app.usecases.chat import ChatUsecase
 from app.core.errors import ExternalServiceError
-from app.schemas.chat import ChatRequest, ChatResponse, ChatPublic
+from app.schemas.chat import ChatRequest, ChatResponse, ChatMessagePublic
 
 
 router = APIRouter()
@@ -26,20 +25,16 @@ async def chat(
         )
         return ChatResponse(answer=response)
     except ExternalServiceError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=e.message
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=e.message)
 
 
-@router.get("/history", response_model=List[ChatPublic])
+@router.get("/history", response_model=list[ChatMessagePublic])
 async def get_chat_history(
-    limit: int,
+    limit: int = 20,
     user_id: int = Depends(get_current_user_id),
     chat_usecase: ChatUsecase = Depends(get_chat_usecase)
 ):
-    messages = await chat_usecase.get_history(user_id, limit)
-    return [ChatPublic.model_validate(msg) for msg in messages]
+    return await chat_usecase.get_history(user_id, limit)
 
 
 @router.delete("/history", status_code=status.HTTP_204_NO_CONTENT)

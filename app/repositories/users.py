@@ -9,18 +9,24 @@ class UserRepository:
         self._session = session
 
     async def get_by_email(self, email: str) -> UserOrm | None:
+        """Поиск пользователя по email"""
+
         result = await self._session.execute(
             select(UserOrm).where(UserOrm.email == email)
         )
         return result.scalar_one_or_none()
 
     async def get_by_id(self, user_id: int) -> UserOrm | None:
+        """Поиск пользователя по ID"""
+
         result = await self._session.execute(
             select(UserOrm).where(UserOrm.id == user_id)
         )
         return result.scalar_one_or_none()
 
     async def create(self, email: str, password_hash: str, role: str) -> UserOrm:
+        """Создание нового пользователя"""
+
         user = UserOrm(
             email=email,
             password_hash=password_hash,

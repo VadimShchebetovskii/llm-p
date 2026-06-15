@@ -3,23 +3,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
 
-    APP_NAME: str
-    ENV: str
+    app_name: str = "llm-p"
+    env: str = "local"
 
-    JWT_SECRET: str
-    JWT_ALG: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    jwt_secret: str
+    jwt_alg: str = "HS256"
+    access_token_expire_minutes: int = 60
 
-    SQLITE_PATH: str
+    sqlite_path: str = "./app.db"
 
-    OPENROUTER_API_KEY: str
-    OPENROUTER_BASE_URL: str
-    OPENROUTER_MODEL: str
-    OPENROUTER_SITE_URL: str
-    OPENROUTER_APP_NAME: str
-
-
+    openrouter_api_key: str
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "stepfun/step-3.5-flash:free"
+    openrouter_site_url: str = "https://example.com"
+    openrouter_app_name: str = "llm-fastapi-openrouter"
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-settings = Settings() 
+settings = Settings()
